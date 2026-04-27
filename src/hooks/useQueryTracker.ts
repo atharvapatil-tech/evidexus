@@ -89,7 +89,30 @@ export function useQueryTracker() {
     return true;
   }, [user]);
 
-  const logQuery = useCallback(async (_toolType: ToolType, _queryText: string, _responseData?: any) => null, []);
+  const logQuery = useCallback(async (toolType: ToolType, queryText: string, responseData?: any) => {
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("query_history")
+    .insert([
+      {
+        user_id: user.id,
+        tool_type: toolType,
+        query_text: queryText,
+        response_data: responseData || {},
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Failed to save query:", error);
+    toast.error("Could not save query");
+    return null;
+  }
+
+  return data.id;
+}, [user]);
 
   return {
     checkLimit,
