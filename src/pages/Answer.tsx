@@ -33,7 +33,7 @@ const Answer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { checkLimit, fetchStats } = useQueryTracker();
+  const { checkLimit, fetchStats, logQuery } = useQueryTracker();
 
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
@@ -65,12 +65,22 @@ const Answer = () => {
     setRunning(true);
     try {
       const indiaContext = localStorage.getItem("evidexus.indiaContext") === "true";
-      const res = await runQuery(mode, q, { indiaContext });
-      if ("error" in res) { toast.error(res.error); return; }
-      if (res.query_id) {
-        await fetchStats();
-        navigate(`/answer/${res.query_id}`);
-      }
+     const res = await runQuery(mode, q, { indiaContext });
+
+if ("error" in res) {
+  toast.error(res.error);
+  return;
+}
+
+// 🔥 SAVE QUERY MANUALLY
+const newId = await logQuery(mode as any, q, res.data);
+
+if (newId) {
+  await fetchStats();
+  navigate(`/answer/${newId}`);
+} else {
+  toast.error("Could not save query");
+}
     } finally {
       setRunning(false);
     }
