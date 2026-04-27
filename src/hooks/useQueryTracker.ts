@@ -89,9 +89,40 @@ export function useQueryTracker() {
     return true;
   }, [user]);
 
-  const logQuery = useCallback(async (toolType: ToolType, queryText: string, responseData?: any) => {
-  if (!user) return null;
+ const logQuery = useCallback(async (toolType: ToolType, queryText: string, responseData?: any) => {
+  console.log("🔥 logQuery CALLED");
 
+  if (!user) {
+    console.log("❌ USER NULL");
+    alert("User is null");
+    return null;
+  }
+
+  console.log("✅ USER ID:", user.id);
+
+  const { data, error } = await supabase
+    .from("query_history")
+    .insert([
+      {
+        user_id: user.id,
+        tool_type: toolType,
+        query_text: queryText,
+        response_data: responseData || {},
+      },
+    ])
+    .select();
+
+  console.log("📦 INSERT DATA:", data);
+  console.log("❌ INSERT ERROR:", error);
+
+  if (error) {
+    alert("Insert failed: " + error.message);
+    return null;
+  }
+
+  alert("Insert success");
+  return data?.[0]?.id;
+}, [user]);
   const { data, error } = await supabase
     .from("query_history")
     .insert([
